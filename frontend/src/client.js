@@ -3,14 +3,21 @@ import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { getMainDefinition } from '@apollo/client/utilities';
 import { createClient } from 'graphql-ws';
 
+
+
+const HTTP_URL = import.meta.env.VITE_GRAPHQL_HTTP;
+const WS_URL = import.meta.env.VITE_GRAPHQL_WS;
+
+
 const httpLink = new HttpLink({
-  uri: 'http://localhost:4000/graphql',
-  credentials: 'same-origin',
+  uri: HTTP_URL,
 });
+
+
 
 const wsLink = new GraphQLWsLink(
   createClient({
-    url: 'ws://localhost:4000/graphql',
+    url: WS_URL,
     connectionParams: {},
     on: {
       connected: () => console.log('WebSocket Connected'),
@@ -21,6 +28,8 @@ const wsLink = new GraphQLWsLink(
     shouldRetry: () => true,
   })
 );
+
+
 
 const splitLink = split(
   ({ query }) => {
@@ -33,6 +42,8 @@ const splitLink = split(
   wsLink,
   httpLink
 );
+
+
 
 const client = new ApolloClient({
   link: splitLink,
@@ -50,7 +61,9 @@ const client = new ApolloClient({
       },
     },
   }),
-  connectToDevTools: true,
+  devtools: {
+    enabled: true,
+  },
   defaultOptions: {
     watchQuery: {
       fetchPolicy: 'cache-and-network',
@@ -67,7 +80,7 @@ const client = new ApolloClient({
 });
 
 console.log('Apollo Client initialized');
-console.log('HTTP Endpoint: http://localhost:4000/graphql');
-console.log('WebSocket Endpoint: ws://localhost:4000/graphql');
+console.log('HTTP Endpoint:', HTTP_URL);
+console.log('WebSocket Endpoint:', WS_URL);
 
 export default client;

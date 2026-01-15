@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLazyQuery, useMutation } from '@apollo/client';
 import { GET_PRODUCTS, PLACE_ORDER } from '../queries';
 import './CustomerApp.css';
@@ -15,14 +15,7 @@ const CustomerApp = () => {
   // GraphQL Query - Lazy (triggered on demand)
   // ========================================
   const [getProducts, { loading, error, data }] = useLazyQuery(GET_PRODUCTS, {
-    fetchPolicy: 'network-only', // Always fetch fresh data
-    onCompleted: (data) => {
-      console.log('✅ Products fetched:', data.getProductsByPincode);
-      setSearchedPincode(pincode);
-    },
-    onError: (error) => {
-      console.error('❌ Error fetching products:', error);
-    },
+    fetchPolicy: 'network-only',
   });
 
   // ========================================
@@ -36,7 +29,6 @@ const CustomerApp = () => {
       setSelectedProduct(null);
       setCustomerAddress('');
       
-      // Clear success message after 5 seconds
       setTimeout(() => {
         setOrderSuccess(null);
       }, 5000);
@@ -46,6 +38,25 @@ const CustomerApp = () => {
       alert(`Failed to place order: ${error.message}`);
     },
   });
+
+  // ========================================
+  // Handle Query Result
+  // ========================================
+  useEffect(() => {
+    if (data?.getProductsByPincode) {
+      console.log('✅ Products fetched:', data.getProductsByPincode);
+      setSearchedPincode(pincode);
+    }
+  }, [data]);
+
+  // ========================================
+  // Handle Query Error
+  // ========================================
+  useEffect(() => {
+    if (error) {
+      console.error('❌ Error fetching products:', error);
+    }
+  }, [error]);
 
   // ========================================
   // Handle Product Search
@@ -216,19 +227,16 @@ const CustomerApp = () => {
               <div className="products-grid">
                 {data.getProductsByPincode.map((product) => (
                   <div key={product.id} className="product-card">
-                    {/* Product Image Placeholder */}
                     <div className="product-image">
                       <div className="image-placeholder">
                         {product.name.charAt(0)}
                       </div>
                     </div>
 
-                    {/* Product Info */}
                     <div className="product-info">
                       <h3 className="product-name">{product.name}</h3>
                       <p className="product-price">{formatPrice(product.price)}</p>
                       
-                      {/* Seller Info */}
                       <div className="seller-info">
                         <span className="seller-icon">🏪</span>
                         <div className="seller-details">
@@ -237,7 +245,6 @@ const CustomerApp = () => {
                         </div>
                       </div>
 
-                      {/* Buy Button */}
                       <button
                         onClick={() => handleBuyNow(product)}
                         className="btn btn-buy"
@@ -266,7 +273,6 @@ const CustomerApp = () => {
 
             <h2>Complete Your Order</h2>
             
-            {/* Selected Product Summary */}
             <div className="order-summary">
               <h3>{selectedProduct.name}</h3>
               <p className="order-price">{formatPrice(selectedProduct.price)}</p>
@@ -275,7 +281,6 @@ const CustomerApp = () => {
               </p>
             </div>
 
-            {/* Order Form */}
             <form onSubmit={handlePlaceOrder} className="order-form">
               <div className="form-group">
                 <label htmlFor="address">Delivery Address *</label>
